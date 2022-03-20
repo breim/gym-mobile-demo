@@ -72,8 +72,8 @@ export default function TrayButton({
 
 const styles = StyleSheet.create({
   iconBase: {
-    height: 32,
-    width: 32,
+    height: 16,
+    width: 16,
     backgroundColor: theme.colors.greyLight,
   },
   iconPortrait: {

@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useState,
 } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { logDailyEvent } from '../../utils';
 import { DailyEvent } from '@daily-co/react-native-daily-js';
 import {
@@ -31,13 +31,14 @@ type Props = {
   roomUrl: string;
 };
 
-const THUMBNAIL_EDGE_LENGTH = 100;
+const THUMBNAIL_EDGE_LENGTH = 0;
 
 const CallPanel = (props: Props) => {
   const callObject = useCallObject();
   const [callState, dispatch] = useReducer(callReducer, initialCallState);
   const [usingFrontCamera, setUsingFrontCamera] = useState(true); // default
   const orientation = useOrientation();
+  let owner = '';
 
   /**
    * Start listening for participant changes, when the callObject is set.
@@ -157,17 +158,30 @@ const CallPanel = (props: Props) => {
   /**
    * Get lists of large tiles and thumbnail tiles to render.
    */
-  const [largeTiles, thumbnailTiles] = useMemo(() => {
+  const [largeTiles, thumbnailTiles, localTile, hostTile] = useMemo(() => {
     let larges: JSX.Element[] = [];
     let thumbnails: JSX.Element[] = [];
+    let local: JSX.Element[] = [];
+    let host: JSX.Element[] = [];
+    let superHostId = ''
+
+    Object.entries(callObject.participants()).forEach(([id, participant]) => {
+      if (participant.owner){
+        superHostId = id;
+      }
+    });
+
     Object.entries(callState.callItems).forEach(([id, callItem]) => {
+      // console.log(callItem)
       let tileType: TileType;
       if (isScreenShare(id)) {
         tileType = TileType.Full;
+      } else if (superHostId === id) {
+        tileType = TileType.Host;
       } else if (isLocal(id) || containsScreenShare(callState.callItems)) {
-        tileType = TileType.Thumbnail;
-      } else if (participantCount(callState.callItems) <= 3) {
-        tileType = TileType.Full;
+        tileType = TileType.Local;
+        // } else if (participantCount(callState.callItems) <= 3) {
+        //   tileType = TileType.Full;
       } else {
         tileType = TileType.Half;
       }
@@ -191,11 +205,15 @@ const CallPanel = (props: Props) => {
       );
       if (tileType === TileType.Thumbnail) {
         thumbnails.push(tile);
+      } else if (tileType === TileType.Local) {
+        local.push(tile);
+      } else if (tileType === TileType.Host) {
+        host.push(tile);
       } else {
         larges.push(tile);
       }
     });
-    return [larges, thumbnails];
+    return [larges, thumbnails, local, host];
   }, [callState.callItems, flipCamera, sendHello, usingFrontCamera]);
 
   const message = getMessage(callState, props.roomUrl);
@@ -203,6 +221,8 @@ const CallPanel = (props: Props) => {
 
   return (
     <>
+
+      {/* HOST */}
       <View
         style={[
           styles.mainContainer,
@@ -232,34 +252,40 @@ const CallPanel = (props: Props) => {
                   : styles.largeTilesContainerInnerLandscape,
               ]}
             >
+              {hostTile}
+            </View>
+
+            {/* USER LOCAL */}
+            <View
+              style={[
+                styles.largeTilesContainerInnerBase,
+                orientation === Orientation.Portrait
+                  ? styles.largeTilesContainerInnerPortrait
+                  : styles.largeTilesContainerInnerLandscape,
+              ]}
+            >
+              {localTile}
+            </View>
+
+            <View style={[styles.mainContainer]}>
+              <ScrollView style={styles.exercisesBox}>
+                <Text style={styles.exercisesText}>PLANK x 30s</Text>
+              </ScrollView>
+            </View>
+
+            {/* OTHER USERS IN CALL */}
+            <View
+              style={[
+                styles.largeTilesContainerInnerBase,
+                orientation === Orientation.Portrait
+                  ? styles.largeTilesContainerInnerPortrait
+                  : styles.largeTilesContainerInnerLandscape,
+              ]}
+            >
               {largeTiles}
             </View>
           </ScrollView>
         )}
-      </View>
-      <View
-        style={[
-          styles.thumbnailContainerOuterBase,
-          orientation === Orientation.Portrait
-            ? styles.thumbnailContainerOuterPortrait
-            : styles.thumbnailContainerOuterLandscape,
-        ]}
-      >
-        <ScrollView
-          horizontal={orientation === Orientation.Portrait}
-          alwaysBounceHorizontal={false}
-          alwaysBounceVertical={false}
-        >
-          <View
-            style={
-              orientation === Orientation.Portrait
-                ? styles.thumbnailContainerInnerPortrait
-                : styles.thumbnailContainerInnerLandscape
-            }
-          >
-            {thumbnailTiles}
-          </View>
-        </ScrollView>
       </View>
     </>
   );
@@ -267,10 +293,17 @@ const CallPanel = (props: Props) => {
 
 const styles = StyleSheet.create({
   mainContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    padding: 12,
+    flex: 1,
+  },
+  exercisesBox: {
+    backgroundColor: 'blue',
+  },
+  exercisesText: {
+    color: '#FFF',
+    padding: 15,
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   thumbnailContainerOuterBase: {
     position: 'absolute',
@@ -286,6 +319,11 @@ const styles = StyleSheet.create({
     height: '100%',
     width: THUMBNAIL_EDGE_LENGTH,
     paddingLeft: 12,
+  },
+  localContainerInnerPortrait: {
+    marginLeft: 12,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
   },
   thumbnailContainerInnerPortrait: {
     marginLeft: 12,
@@ -314,12 +352,12 @@ const styles = StyleSheet.create({
   largeTilesContainerInnerPortrait: {
     flexDirection: 'row',
     marginTop: THUMBNAIL_EDGE_LENGTH,
-    marginBottom: TRAY_THICKNESS,
+    marginBottom: 0,
   },
   largeTilesContainerInnerLandscape: {
     flexDirection: 'column',
     marginLeft: THUMBNAIL_EDGE_LENGTH,
-    marginRight: TRAY_THICKNESS,
+    marginRight: 0,
   },
 });
 

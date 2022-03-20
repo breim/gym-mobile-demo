@@ -17,6 +17,8 @@ export enum TileType {
   Thumbnail,
   Half,
   Full,
+  Host,
+  Local,
 }
 
 type Props = {
@@ -185,25 +187,33 @@ export default function Tile(props: Props) {
   ]);
 
   let typeSpecificStyle: ViewStyle | null = null;
+  let typeSpecificStyleContainer: ViewStyle | null = null;
   switch (props.type) {
     case TileType.Half:
+      typeSpecificStyleContainer = styles.containerHalf;
       typeSpecificStyle =
         orientation === Orientation.Portrait
           ? styles.containerHalfPortrait
           : styles.containerHalfLandscape;
       break;
-    case TileType.Full:
-      typeSpecificStyle =
-        orientation === Orientation.Portrait
-          ? styles.containerFullPortrait
-          : styles.containerFullLandscape;
+    case TileType.Host:
+      typeSpecificStyleContainer = styles.container;
+      typeSpecificStyle = styles.containerFullPortrait;
       break;
+    case TileType.Full:
+      typeSpecificStyleContainer = styles.container;
+      typeSpecificStyle = styles.containerFullPortrait;
+      break;
+    default:
+      typeSpecificStyleContainer = styles.container;
+      typeSpecificStyle = styles.containerFullPortrait;
   }
   return (
     <View
       style={[
-        styles.container,
+        typeSpecificStyleContainer,
         styles.containerLoadingOrNotShowingVideo,
+        // styles.containerFullPortrait,
         typeSpecificStyle,
       ]}
       {...robotID(props.robotId)}
@@ -221,6 +231,13 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-end',
     alignItems: 'center',
+    overflow: 'scroll',
+    aspectRatio: 13 / 6,
+  },
+  containerHalf: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
     overflow: 'hidden',
     aspectRatio: 1,
   },
@@ -234,7 +251,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   containerFullLandscape: {
-    height: '100%',
+    height: '80%',
   },
   containerLoadingOrNotShowingVideo: {
     backgroundColor: theme.colors.blueDark,
@@ -242,7 +259,7 @@ const styles = StyleSheet.create({
   media: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
+    position: 'relative',
   },
   overlayMessage: {
     color: theme.colors.white,

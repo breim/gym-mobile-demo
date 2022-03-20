@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     borderTopWidth: 1,
-    paddingVertical: 16,
+    paddingVertical: 2,
     paddingHorizontal: 12,
   },
   containerLandscape: {
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column-reverse',
     borderLeftWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingVertical: 8,
   },
   controlsPortrait: {
     flexDirection: 'row',

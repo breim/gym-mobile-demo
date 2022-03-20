@@ -92,6 +92,7 @@ const App = () => {
    * Attach lifecycle event handlers.
    */
   useEffect(() => {
+    setRoomUrlFieldValue('https://breim.daily.co/21c72c9f-533a-43bd-b781-8a4c75c71c6d');
     if (!callObject) {
       return;
     }
